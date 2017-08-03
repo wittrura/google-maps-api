@@ -12,6 +12,9 @@
         <div>
           <input type="button" id="show-listings" value="Show Listings">
           <input type="button" id="hide-listings" value="Hide Listings">
+          <hr>
+          <span class="text"> Draw a shape to search within it for home!</span>
+          <input id="toggle-drawing" type="button" value="Drawing Tools">
         </div>
       </div>
       <div id="map"></div>
@@ -22,6 +25,9 @@
 
       // create a blank array for all listing markers
       var markers = [];
+
+      // global polygon variable to ensure only ONE polygon is rendered
+      var polygon = null;
 
       function initMap() {
         // create a styles array to use with the map
@@ -103,6 +109,18 @@
         var largeInfowindow = new google.maps.InfoWindow();
         var bounds = new google.maps.LatLngBounds();
 
+        // initialize the drawing manager
+        var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+            drawingModes: [
+              google.maps.drawing.OverlayType.POLYGON
+            ]
+          }
+        });
+
         // style the markers, this is for listings
         var defaultIcon = makeMarkerIcon('0091ff');
 
@@ -152,10 +170,35 @@
           marker.addListener('mouseout', function() {
             this.setIcon(defaultIcon);
           });
-
-          document.getElementById('show-listings').addEventListener('click', showListings);
-          document.getElementById('hide-listings').addEventListener('click', hideListings);
         }
+
+        document.getElementById('show-listings').addEventListener('click', showListings);
+        document.getElementById('hide-listings').addEventListener('click', hideListings);
+
+        document.getElementById('toggle-drawing').addEventListener('click', function() {
+          toggleDrawing(drawingManager);
+        });
+
+        // add event listener so that the polygon is captured, then call searchWithinPolygon function
+        // this will show the markers in the polygon and hide any outside of it
+        drawingManager.addListener('overlaycomplete', function(event) {
+          // check if there is an existing polygon
+          // if there is, get rid of it and remove the markers
+          if (polygon) {
+            polygon.setMap(null);
+            hideListings();
+          }
+          // switching the drawing mode to the HAND aka no longer drawing
+          drawingManager.setDrawingMode(null);
+          // creating a new editable polygon from the overlaycomplete
+          polygon = event.overlay;
+          polygon.setEditable(true);
+          // searching within the polygon
+          searchWithinPolygon();
+          // make sure the search is re-done if the polygon is changed
+          polygon.getPath().addListener('set_at', searchWithinPolygon);
+          polygon.getPath().addListener('insert_at', searchWithinPolygon);
+        });
 
         // populates the infowindow when the marker is clicked
         // only allow one infowindow which will open at the marker that is clicked
@@ -235,10 +278,34 @@
           return markerImage;
         }
 
+        // hides and shows drawing options
+        function toggleDrawing(drawingManager) {
+          if (drawingManager.map) {
+            drawingManager.setMap(null);
+            // in case the user drew anything, get rid of the polygon
+            if (polygon) {
+              polygon.setMap(null);
+            }
+          } else {
+            drawingManager.setMap(map);
+          }
+        }
+
+        // hides all markers outside the polygon and shows only markers within it
+        // this is so the user can specify an exact area of search
+        function searchWithinPolygon() {
+          for (var i = 0; i < markers.length; i++) {
+            if (google.maps.geometry.poly.containsLocation(markers[i].position, polygon)) {
+              markers[i].setMap(map);
+            } else {
+              markers[i].setMap(null);
+            }
+          }
+        }
+
       }
     </script>
 
-    <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&callback=initMap"></script> -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=geometry&v=3&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=geometry,drawing&v=3&callback=initMap"></script>
   </body>
 </html>
