@@ -301,6 +301,8 @@
               markers[i].setMap(null);
             }
           }
+          var area = google.maps.geometry.spherical.computeArea(polygon.getPath());
+          window.alert(Math.round(area) + ' square meters');
         }
 
       }
