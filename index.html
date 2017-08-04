@@ -20,6 +20,8 @@
         <div>
           <input id="zoom-to-area-text" type="text" placeholder="Enter you favorite area!">
           <input id="zoom-to-area" type="button" value="zoom">
+          <div id="formatted-address"></div>
+          <div id="location-lat-lng"></div>
         </div>
       </div>
       <div id="map"></div>
@@ -334,6 +336,15 @@
               if (status == google.maps.GeocoderStatus.OK) {
                 map.setCenter(results[0].geometry.location);
                 map.setZoom(15);
+
+                // outputs formatted address and lat/lng below search input box
+                document.getElementById('formatted-address').innerHTML = `<p>
+                  The formatted address is: ${results[0].formatted_address}</p>`
+
+                document.getElementById('location-lat-lng').innerHTML = `<p>
+                  The location is ${results[0].geometry.location.lat()} lat,
+                  ${results[0].geometry.location.lng()} lng</p>`;
+
               } else {
                 window.alert('We could not find that location - try entering a more specific place');
               }
