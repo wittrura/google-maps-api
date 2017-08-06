@@ -25,6 +25,13 @@ h1 {
   width: 48%;
 }
 
+hr {
+  background: #D0D7D9;
+  height: 1px;
+  margin: 20px 0 20px 0;
+  border: none;
+}
+
 #map {
   bottom:0px;
   height: 100%;
@@ -49,7 +56,7 @@ h1 {
   height: 200px;
 }
 
-#search-within-time-text {
+#places-search, #search-within-time-text {
   width: 84%;
 }
 
@@ -57,14 +64,13 @@ h1 {
   font-size: 12px;
 }
 
- #toggle-drawing {
-   width: 27%;
-   position: relative;
-   margin-left: 10px;
+#toggle-drawing {
+  width: 27%;
+  position: relative;
+  margin-left: 10px;
 }
 
 #zoom-to-area-text {
-  position: relative;
   width: 70%;
 }
 

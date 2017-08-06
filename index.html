@@ -60,6 +60,10 @@
       // global polygon variable to ensure only ONE polygon is rendered
       var polygon = null;
 
+      // create placemarkers array to use in multiple functions to have ControlPosition
+      // over the number of places that show
+      var placeMarkers = [];
+
       function initMap() {
         // create a styles array to use with the map
         var styles = [
@@ -219,7 +223,7 @@
         }
 
         document.getElementById('show-listings').addEventListener('click', showListings);
-        document.getElementById('hide-listings').addEventListener('click', hideListings);
+        document.getElementById('hide-listings').addEventListener('click', hideMarkers(markers));
 
         document.getElementById('toggle-drawing').addEventListener('click', function() {
           toggleDrawing(drawingManager);
@@ -250,7 +254,7 @@
           // if there is, get rid of it and remove the markers
           if (polygon) {
             polygon.setMap(null);
-            hideListings();
+            hideMarkers(markers);
           }
           // switching the drawing mode to the HAND aka no longer drawing
           drawingManager.setDrawingMode(null);
@@ -323,7 +327,7 @@
       }
 
       // loop through markers array and hides them all
-      function hideListings() {
+      function hideMarkers(markers) {
         for (var i = 0; i < markers.length; i++) {
           markers[i].setMap(null);
         }
@@ -416,7 +420,7 @@
         if (address == '') {
           window.alert('You must enter an address.');
         } else {
-          hideListings();
+          hideMarkers(markers);
           // use the distance matrix service to calculate the duration of the routes between
           // all our markers and the destination address entered by the user
           // then put all origins into an origin matrix
@@ -492,7 +496,7 @@
       // response to user selecting "show route" on markers within calculated distance
       // displays the route on the map
       function displayDirections(origin) {
-        hideListings();
+        hideMarkers(markers);
         var directionsService = new google.maps.DirectionsService;
         // get the destination address from the user entered value
         var destinationAddress = document.getElementById('search-within-time-text').value;
@@ -518,6 +522,65 @@
             window.alert('Directions request failed due to ' + status);
           }
         });
+      }
+
+      // this function fires when the user selects a searchbok picklist item
+      // it will do a nearby search using the selected query string or place
+      function searchBoxPlaces(searchBox) {
+        hideMarkers(placeMarkers);
+        var places = searchBox.getPlaces();
+        // for each place, get the icon, name, and location
+        createMarkersForPlaces(places);
+        if (places.length == 0) {
+          window.alert('We did not find any places matching that search!');
+        }
+      }
+
+      // this function fires when the user selects "go" on the places search
+      // it will do a nearby search using the entered query string or place
+      function textSearchPlaces() {
+        var bounds = map.getBounds();
+        hideMarkers(placeMarkers);
+        var placesService = new google.maps.places.PlacesService(map);
+        placesService.textSearch({
+          query: document.getElementById('places-search').value,
+          bounds: bounds
+        }, function(results, status) {
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            createMarkersForPlaces(results);
+          }
+        });
+      }
+
+      // this function creates markers for each place found in either places search
+      function createMarkersForPlaces(places) {
+        var bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < places.length; i++) {
+          var place = places[i];
+          var icon = {
+            url: place.icon,
+            size: new google.maps.Size(35, 35),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 34),
+            scaledSize: new google.maps.Size(25, 25)
+          };
+          // create a marker for each place
+          var marker = new google.maps.Marker({
+            map: map,
+            icon: icon,
+            title: place.name,
+            position: place.geometry.location,
+            id: place.id
+          });
+          placeMarkers.push(marker);
+          if (place.geometry.viewport) {
+            // only geocodes have viewport
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        }
+        map.fitBounds(bounds);
       }
 
     </script>
