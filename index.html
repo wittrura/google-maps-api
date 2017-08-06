@@ -441,7 +441,9 @@
                   atLeastOne = true;
                   // create a mini infowindow to open immediate and contain the distance and duration
                   var infowindow = new google.maps.InfoWindow({
-                    content: durationText + ' away, ' + distanceText
+                    content: durationText + ' away, ' + distanceText +
+                      '<div><input type=\"button\" value=\"View Route\" onclick =' +
+                      '\"displayDirections(&quot;' + origins[i] + '&quot;);\"></input></div>'
                   });
                   infowindow.open(map, markers[i]);
                   // put this in so that this small window closes if the user clicks the marker,
@@ -455,6 +457,38 @@
             }
           }
         }
+
+        // response to user selecting "show route" on markers within calculated distance
+        // displays the route on the map
+        function displayDirections(origin) {
+          hideListings();
+          var directionsService = new google.maps.DirectionsService;
+          // get the destination address from the user entered value
+          var destinationAddress = document.getElementById('search-within-time-text').value;
+          // get mode from user entered value
+          var mode = document.getElementById('mode').value;
+          directionsService.route({
+            // the origin is the passed in marker's position
+            origin: origin,
+            // the destination is the user entered address
+            destination: destinationAddress,
+            travelMode: google.maps.TravelMode[mode]
+          }, function(response, status) {
+            if (status === google.maps.DirectionsStatus.OK) {
+              var directionsDisplay = new google.maps.DirectionsRenderer({
+                map: map,
+                directions: response,
+                draggable: true,
+                polylineOptions: {
+                  strokeColor: 'green'
+                }
+              });
+            } else {
+              window.alert('Directions request failed due to ' + status);
+            }
+          });
+        }
+
       }
     </script>
 
