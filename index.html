@@ -42,6 +42,11 @@
           <input id="search-within-time-text" type="text" placeholder="Ex: Google Office NYC or 75 9th Ave, New York, NY">
           <input id="search-within-time" type="button" value="Go">
         </div>
+        <div>
+          <span class="text">Search for nearby places</span>
+          <input id="places-search" type="text" placeholder="Ex: Pizza delivery in NYC">
+          <input id="go-places" type="button" value="Go">
+        </div>
       </div>
       <div id="map"></div>
     </div>
@@ -153,7 +158,22 @@
         // create a "highlighted location" marker color for mouseover on marker
         var highlightedIcon = makeMarkerIcon('FFFF24');
 
-        // hardcoded locations, normally to come from a database
+        // this autocomplete is for use in the search within time entry box
+        var timeAutocomplete = new google.maps.places.Autocomplete(
+          document.getElementById('search-within-time-text'));
+        // this autocomplete is for use in the geocoder entry box
+        var zoomAutocomplete = new google.maps.places.Autocomplete(
+          document.getElementById('zoom-to-area-text'));
+        // bias the boundaries within the map for the zoom to area text
+        zoomAutocomplete.bindTo('bounds', map);
+
+        // create a searchbox in order to execute a places searchbox
+        var searchBox = new google.maps.places.SearchBox(
+          document.getElementById('places-search'));
+        // bias the searchbox to within the bounds of the map
+        searchBox.setBounds(map.getBounds());
+
+        // hardcoded locations, normally these would come from a database
         var locations = [
           {title: 'Park Ave Penthouse', location: {lat: 40.7713024, lng: -73.9632393}},
           {title: 'Chelsea Loft', location: {lat: 40.7444883, lng: -73.9949465}},
@@ -212,6 +232,16 @@
         document.getElementById('search-within-time').addEventListener('click', function() {
           searchWithinTime();
         });
+
+        // listen for the event fired when the user selecs a prediction from the
+        // picklist and retreive more details for that place
+        searchBox.addListener('places_changed', function() {
+          searchBoxPlaces(this);
+        });
+
+        // listen for the event fired when the user selects a prediction and clicks
+        // "go" for more details for that place
+        document.getElementById('go-places').addEventListener('click', textSearchPlaces);
 
         // add event listener so that the polygon is captured, then call searchWithinPolygon function
         // this will show the markers in the polygon and hide any outside of it
@@ -492,6 +522,6 @@
 
     </script>
 
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=geometry,drawing&v=3&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=places,geometry,drawing&v=3&callback=initMap"></script>
   </body>
 </html>
